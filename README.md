@@ -107,9 +107,6 @@ The top-level file maps 15 features into the neural net:
 - `f14`: average absolute deviation from `CD3`
 - `f15`: mobility from `CD3`
 
-### Important Note
-
-The top-level file clearly shows the intended architecture, but some lower-level module interfaces do not currently match it exactly. So it is best to treat `sleep_apnea_top.v` as the architectural blueprint, even if some port names still need cleanup.
 
 ## Module-By-Module Explanation
 
@@ -169,8 +166,6 @@ Outputs of interest:
 - `aprx3_nrm`: normalized approximation at level 3
 - `valid_L1`, `valid_L2`, `valid_L3`: band-valid signals
 
-Why there are many extra outputs:
-Some raw and intermediate ports are preserved for compatibility with older versions of the design or for debugging.
 
 ### Module: `lwt_stage`
 
@@ -389,14 +384,6 @@ In the current top-level design, the nonlinear-energy output is the one mainly c
 Purpose:
 Provide a compatibility wrapper around `feature_aad_nle` using Hjorth-related names.
 
-Behavior:
-- Reuses the generic engine from `aadnle.v`
-- Renames outputs to match older naming conventions
-- Adds extra compatibility trigger outputs (`startbram2`, `startac`), which are aliases of the main done signal
-- Acts more like an adapter than a separate algorithm
-
-Why it exists:
-It preserves compatibility with an earlier code structure or older top-level expectations.
 
 ## 13. `mfactor.v`
 
@@ -574,17 +561,7 @@ That order helps because:
 - then the more complex feature engines
 - then the neural network
 
-## Known Codebase Reality Check
-
-A new reader should know this upfront:
-
-- The top-level module clearly expresses the intended architecture.
-- Some lower-level wrappers still use inconsistent port names.
-- Some modules look like they were refactored toward valid-driven streaming, while others still behave like fixed-window legacy engines.
-- The neural network expects external `.data` files for weights.
-- Some arithmetic is approximate fixed-point logic using shifts rather than exact division.
-
-## Summary
+## Gist
 
 This repository implements a hardware ECG analysis pipeline for sleep apnea detection.
 

@@ -155,8 +155,6 @@ endmodule
 
 
 // ========================================================
-// Reusable Pipelined Building Blocks (Mathematically Unaltered)
-// ========================================================
 
 module mult_wt_nn(
     input clk,

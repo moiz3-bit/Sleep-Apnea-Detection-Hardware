@@ -1,9 +1,9 @@
 `timescale 1ns / 1ps
 
-// =====================================================================
+
 // Top Level Sleep Apnea Classifier System
 // Perfectly coordinates IIR -> LWT -> 15 Features -> Wide Neural Network
-// =====================================================================
+// 
 
 module sleep_apnea_top(
     input clk,

@@ -1,9 +1,8 @@
 `timescale 1ns / 1ps
 
-// =====================================================================
 // Pipelined Wide Neural Network Execution Engine
 // 15 Inputs -> 100 Hidden Neurons -> 1 Output (Sleep Apnea Classification)
-// =====================================================================
+//
 
 module neuralnet_top(
     input clk, rst,

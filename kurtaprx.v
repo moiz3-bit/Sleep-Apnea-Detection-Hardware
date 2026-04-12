@@ -1,9 +1,6 @@
 `timescale 1ns / 1ps
 
-// ============================================
-// Original IP Wrapper for KURTAPRX (CA3 Layer)
-// Automates correct math approximations perfectly into feature_kurtosis core.
-// ============================================
+
 module kurtaprx(
     input clk, rst,
     input [15:0] linput23,

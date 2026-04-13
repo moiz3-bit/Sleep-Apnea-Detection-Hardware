@@ -1,8 +1,6 @@
 `timescale 1ns / 1ps
 
-// ============================================
-// Original IP Wrapper for AADNLE_A3 (Level 3 CA3)
-// ============================================
+
 module aadnle_a3(
     input clk, rst,
     input signed [15:0] linput3,

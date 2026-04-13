@@ -92,14 +92,14 @@ This is the file a new reader should start with, because it shows the intended a
 The top-level file maps 15 features into the neural net:
 
 - `f1`: mean of `CD1`
-- `f2`: variance-like feature from `CD1`
+- `f2`: variance feature from `CD1`
 - `f3`: kurtosis of `CD1`
-- `f4`: mobility-like feature from `CD1`
+- `f4`: mobility from `CD1`
 - `f5`: kurtosis of `CD3`
 - `f6`: kurtosis of `CA3`
 - `f7`: mean of `CD2`
 - `f8`: mean of `CD3`
-- `f9`: mobility-like feature from `CA3`
+- `f9`: mobility feature from `CA3`
 - `f10`: nonlinear energy from `CD1`
 - `f11`: nonlinear energy from `CA3`
 - `f12`: nonlinear energy from `CD3`
@@ -126,11 +126,6 @@ How it works:
 
 Why this matters:
 Feature extraction is sensitive to noise, baseline drift, and waveform distortion. This filter is intended to clean the ECG signal before wavelet decomposition.
-
-### Module: `Biquad_SOS`
-
-Purpose:
-Implement one second-order IIR section using fixed-point arithmetic.
 
 Internal behavior:
 - Stores delayed input samples in `x1`, `x2`
@@ -166,12 +161,6 @@ Outputs of interest:
 - `aprx3_nrm`: normalized approximation at level 3
 - `valid_L1`, `valid_L2`, `valid_L3`: band-valid signals
 
-
-### Module: `lwt_stage`
-
-Purpose:
-Implement one lifting-based wavelet stage.
-
 Internal behavior:
 - Alternates between even and odd samples
 - Stores recent samples needed for lifting operations
@@ -187,8 +176,6 @@ This block converts the ECG into multiple time-frequency bands. The rest of the 
 
 This file contains the generic absolute-mean feature engine and the level-1 wrapper.
 
-### Module: `feature_absmean`
-
 Purpose:
 Compute the mean absolute value of a signal over a frame.
 
@@ -203,9 +190,7 @@ Internal behavior:
 Why this feature exists:
 Mean absolute value is a simple amplitude/energy-related statistic and is often used in physiological signal analysis.
 
-### Module: `absolutemean`
 
-Purpose:
 Wrap `feature_absmean` for the level-1 detail band.
 
 Configuration:
@@ -247,7 +232,7 @@ This file contains the generic kurtosis engine and the level-1 wrapper.
 ### Module: `feature_kurtosis`
 
 Purpose:
-Compute a kurtosis-like feature over a frame.
+Compute  kurtosis feature over a frame.
 
 Internal behavior:
 - Squares the input sample
@@ -258,7 +243,6 @@ Internal behavior:
 - Uses a custom iterative divider to compute the final ratio
 - Pulses `startk` when the result is valid
 
-Why it is more complex:
 Kurtosis uses fourth-order statistics, so internal values grow large quickly. That makes the datapath wider and the implementation more involved than simpler features.
 
 ### Module: `kurt_division`
@@ -293,7 +277,7 @@ Configuration:
 - `N_MULT = 750`
 - `SHIFT_VAL = 29`
 
-In the current top-level integration, this is used for `CD3`.
+In the current top-level integration, this is used for `CD3`. Apologies for inconsistent naming.
 
 ## 8. `kurtaprx.v`
 
@@ -311,13 +295,13 @@ In the current top-level integration, this is used for `CA3`.
 
 ## 9. `aadnle.v`
 
-This file contains a reusable engine that computes average-absolute-difference style and nonlinear-energy style features.
+This file contains a reusable engine that computes average-absolute-difference and nonlinear-energy feature.
 
 ### Module: `feature_aad_nle`
 
 Purpose:
 Compute two features over a frame:
-- an AAD-like feature
+- an AAD feature
 - a nonlinear-energy feature
 
 Internal behavior:
@@ -329,9 +313,6 @@ Internal behavior:
 - Accumulates both results over the full frame
 - Applies shift-based output scaling
 - Pulses `start_pulse` when the outputs are ready
-
-Why it is important:
-This is one of the most reused cores in the repo. Several wrappers simply configure it for different wavelet bands and frame sizes.
 
 ### Module: `aadnle`
 
@@ -375,42 +356,29 @@ Configuration:
 - `FRAME_SIZE = 750`
 - `TEO_DELAY_TAPS = 10`
 
-In the current top-level design, the nonlinear-energy output is the one mainly consumed.
-
 ## 12. `hjorth.v`
 
 ### Module: `hjorth`
 
-Purpose:
-Provide a compatibility wrapper around `feature_aad_nle` using Hjorth-related names.
-
-
 ## 13. `mfactor.v`
-
-This file contains one of the most complex feature-extraction paths in the project.
 
 ### Module: `mfactor`
 
 Purpose:
-Compute variance-like, mobility-like, and irregularity-related quantities from the level-1 detail band.
+Compute variance, mobility, and irregularity quantities from the level-1 detail band.
 
 Internal behavior:
 - Forms first and second differences
-- Accumulates energy/statistical terms over a frame (hardcoded to 3000 samples, not parameterized)
+- Accumulates energy/statistical terms over a frame 
 - Applies scaling shifts after frame completion
 - Starts a division stage
 - Starts square-root stages
 - Starts a second division stage
 - Pulses `start_mob` when the final values are ready
 
-Why this block is complex:
-Unlike the simpler feature blocks, this one performs several dependent stages of math after the accumulation window ends. It is effectively a small pipeline controller plus arithmetic engine. Note that the frame count is hardcoded rather than parameterized like other feature blocks.
 
-Supporting modules in this file:
-- `sroot_mf`: iterative square root
-- `division_mf`: iterative division
-- `project_ad12_m`: helper adder
-- `multiplier123_m`, `multiplier1234_m`: helper multipliers
+Unlike the simpler feature blocks, this one performs several dependent stages of math after the accumulation window ends. It is effectively a small pipeline controller plus arithmetic engine.
+
 
 ## 14. `mobthr.v`
 
@@ -419,7 +387,7 @@ This file is structurally similar to `mfactor.v`, but tuned for the level-3 deta
 ### Module: `mobthr`
 
 Purpose:
-Compute mobility and irregularity style features from `CD3`.
+Compute mobility and irregularity  features from `CD3`.
 
 Internal behavior:
 - Builds first and second differences
@@ -436,21 +404,13 @@ Supporting modules in this file:
 - `project_ad12_thr`: helper adder
 - `multiplier123_thr`, `multiplier1234_thr`: helper multipliers
 
-Why it matters:
-This block contributes some of the more advanced `CD3` features used by the classifier.
 
 ## 15. `moba3.v`
 
 ### Module: `moba3`
 
 Purpose:
-Generate a mobility-like approximation from the approximation band `CA3`.
-
-How it works:
-- Reuses the generic `feature_aad_nle` engine
-- Uses the nonlinear-energy-style output as a compact proxy mobility feature
-
-This is a lightweight wrapper rather than a large standalone implementation.
+Generate a mobility approximation from the approximation band `CA3`.
 
 ## 16. `neuralnet.v`
 
@@ -508,9 +468,6 @@ The memory is first initialized to zero and then loaded from a hex file via `$re
 - `adder_tree_nn`: sums the 15 weighted inputs
 - `relu_nn`: applies ReLU activation
 
-## Frame Sizes And Timing Model
-
-One important thing for a new reader is that this repo mixes streaming behavior and frame-based feature generation.
 
 ### Streaming Front End
 
@@ -525,19 +482,10 @@ Most feature engines do not emit one feature per sample. Instead, they:
 - pulse a done/valid signal when the feature value is ready
 
 Typical frame sizes in the code:
-- `3002` samples for level-1 parameterized features (`absolutemean`, `kurt`, `aadnle`), or `3000` hardcoded in `mfactor`
+- `3002` samples for level-1 parameterized features (`absolutemean`, `kurt`, `aadnle`)
 - `1500` samples for level-2 features
 - `750` samples for level-3 features
 
-### What That Means Practically
-
-This design behaves more like:
-
-- collect a frame
-- compute features for that frame
-- run one inference for that frame
-
-It is not a per-sample classifier.
 
 ## Reading Strategy For A New Developer
 
